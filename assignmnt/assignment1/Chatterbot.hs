@@ -107,10 +107,9 @@ reductionsApply _ = id
 -- Replaces a wildcard in a list with the list given as the third argument
 substitute :: Eq a => a -> [a] -> [a] -> [a]
 
-substitute _ [] _ = []
 substitute a (x:xs) bs
     | bs == [] = xs
-    | xs == [] && x == a = [x]
+    | x == a && xs == [] = bs
     | x == a = bs ++ (substitute a xs bs)
     | otherwise = x:(substitute a xs bs)
 
@@ -119,8 +118,8 @@ substitute a (x:xs) bs
 -- bound to the wildcard in the pattern list.
 match :: Eq a => a -> [a] -> [a] -> Maybe [a]
 match _ [] [] = Just []
-match _ [] _ = Just []
-match _ _ [] = Just []
+match _ [] _ = Nothing
+match _ _ [] = Nothing
 match wildcard (x:xs) (y:ys)
     | x /= wildcard && x == y = match wildcard xs ys
     | x == wildcard && xs == ys = singleWildcardMatch (x:xs) (y:ys)
