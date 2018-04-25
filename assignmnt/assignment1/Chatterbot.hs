@@ -124,7 +124,7 @@ match wildcard (x:xs) (y:ys)
     | x /= wildcard && x == y = match wildcard xs ys
     | x == wildcard && xs == ys = singleWildcardMatch (x:xs) (y:ys)
     | x == wildcard && List.isInfixOf xs ys = longerWildcardMatch (x:xs) (y:ys)
-    | x == wildcard && elem wildcard xs = longerWildcardMatch (x:xs) (y:ys)
+    | x == wildcard && elem wildcard xs && (getIndex 0 [x] xs) < length (y:ys) = longerWildcardMatch (x:xs) (y:ys)
     | otherwise = Nothing
 
 getIndex index xs ys
@@ -138,7 +138,6 @@ singleWildcardMatch, longerWildcardMatch :: Eq a => [a] -> [a] -> Maybe [a]
 singleWildcardMatch (wc:xs) (y:ys) = match wc xs ys >> Just [y]
 
 longerWildcardMatch (x:xs) (y:ys)
-    | elem x xs && (getIndex 0 [x] xs) >= length (y:ys) = Nothing
     | elem x xs = Just (y:(drop 0 . take (getIndex 0 ((drop 0 . take (getIndex 0 [x] xs)) xs) ys)) ys)
     | ((y:(drop 0 . take (getIndex 0 xs ys)) ys) ++ xs) /=  y:ys = Nothing
     | otherwise = Just (y:(drop 0 . take (getIndex 0 xs ys)) ys)
