@@ -36,7 +36,7 @@ rulesApply :: [PhrasePair] -> Phrase -> Phrase
 {- TO BE WRITTEN -}
 rulesApply [] _ = []
 rulesApply _ [] = []
-rulesApply phrasepairs phrase  =  Maybe.fromMaybe [] (transformationsApply "*" id phrasepairs phrase)
+rulesApply phrasepairs phrase  =  Maybe.fromMaybe [] (transformationsApply "*" reflect phrasepairs phrase)
 
 
 reflect :: Phrase -> Phrase
@@ -178,7 +178,11 @@ matchCheck = matchTest == Just testSubstitutions
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
 transformationApply wildcard func xs p
     | (match wildcard (fst p) xs) == Nothing = Nothing
-    | otherwise = Just (substitute wildcard (snd p) (Maybe.fromJust (match wildcard (fst p) xs)))
+    | otherwise = Just (substitute wildcard (snd p) m)
+    where
+      m = (func r)
+        where
+          r = (Maybe.fromJust (match wildcard (fst p) xs))
 
 
 -- Applying a list of patterns until one succeeds
