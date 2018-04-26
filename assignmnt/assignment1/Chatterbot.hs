@@ -121,7 +121,7 @@ substitute :: Eq a => a -> [a] -> [a] -> [a]
 substitute a (x:xs) bs
     | bs == [] = xs
     | x == a && xs == [] = bs
-    | xs == [] = []
+    | xs == [] = [x]
     | x == a = bs ++ (substitute a xs bs)
     | otherwise = x:(substitute a xs bs)
 
