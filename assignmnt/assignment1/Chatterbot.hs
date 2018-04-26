@@ -3,6 +3,8 @@ import Utilities
 import System.Random
 import Data.Char
 import qualified Data.List as List
+import qualified Data.Map as Map
+import qualified Data.Maybe as Maybe
 
 chatterbot :: String -> [(String, [String])] -> IO ()
 chatterbot botName botRules = do
@@ -32,11 +34,20 @@ stateOfMind _ = return id
 
 rulesApply :: [PhrasePair] -> Phrase -> Phrase
 {- TO BE WRITTEN -}
-rulesApply _ = id
+rulesApply [] _ = []
+rulesApply _ [] = []
+rulesApply phrasepairs phrase  =  Maybe.fromMaybe [] (transformationsApply "*" id phrasepairs phrase)
+
 
 reflect :: Phrase -> Phrase
 {- TO BE WRITTEN -}
-reflect = id
+reflect [] = []
+reflect (s:phrases)
+    | elem s (map fst reflections) = x:reflect phrases
+    | otherwise = s:reflect phrases
+    where
+      x :: String
+      x = (Maybe.fromMaybe "" (lookup s reflections))
 
 reflections =
   [ ("am",     "are"),
@@ -110,6 +121,7 @@ substitute :: Eq a => a -> [a] -> [a] -> [a]
 substitute a (x:xs) bs
     | bs == [] = xs
     | x == a && xs == [] = bs
+    | xs == [] = []
     | x == a = bs ++ (substitute a xs bs)
     | otherwise = x:(substitute a xs bs)
 
@@ -164,11 +176,14 @@ matchCheck = matchTest == Just testSubstitutions
 
 -- Applying a single pattern
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
-transformationApply _ _ _ _ = Nothing
-{- TO BE WRITTEN -}
+transformationApply wildcard func xs p
+    | (match wildcard (fst p) xs) == Nothing = Nothing
+    | otherwise = Just (substitute wildcard (snd p) (Maybe.fromJust (match wildcard (fst p) xs)))
 
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
-transformationsApply _ _ _ _ = Nothing
-{- TO BE WRITTEN -}
+transformationsApply _ _ [] _ = Nothing
+transformationsApply wildcard func (p:ps) xs
+    | transformationApply wildcard func xs p == Nothing = transformationsApply wildcard func ps xs
+    | otherwise =  transformationApply wildcard func xs p
