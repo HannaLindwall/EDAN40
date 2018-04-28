@@ -96,7 +96,10 @@ isShortestAndLongest xs = (head (sort xs), last (sort xs))
 -- returns the same list?
 mystery xs = foldr (++) [] (map (\y -> [y]) xs)
 
-
-
+-- getIndex for element in list
+getIndex index xs ys
+    | length xs == 0 = length ys
+    | xs == ((drop index . take (index + (length xs))) ys ) = index
+    | otherwise = getIndex (index + 1) xs ys
 
 --hej

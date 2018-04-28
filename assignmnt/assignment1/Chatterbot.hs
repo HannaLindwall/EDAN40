@@ -33,11 +33,12 @@ stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
 stateOfMind brain = do
    r <- randomIO :: IO Float
    let phrasepairs = map (\i->(fst i, pick r (snd i))) brain
-   return (rulesApply phrasepairs)
+   -- return $ rulesApply (map (map2 (id, pick r)) brain)
+   return $ rulesApply phrasepairs
 
 rulesApply :: [PhrasePair] -> Phrase -> Phrase
 rulesApply phrasepairs phrase  =  Maybe.fromMaybe [] (transformationsApply "*" reflect phrasepairs phrase)
-
+-- rulesApply = (maybe [] id . ) . transformationsApply "*" reflect
 
 reflect :: Phrase -> Phrase
 reflect [] = []
@@ -77,12 +78,11 @@ present :: Phrase -> String
 present = unwords
 
 prepare :: String -> Phrase
-prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|")
+prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|") 
+-- prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|")
 
 rulesCompile :: [(String, [String])] -> BotBrain
-rulesCompile [] = []
-rulesCompile phrases = map (\i -> (words (fst i), map(\j-> words j)(snd i))) phrases
-
+rulesCompile phrases = map ( map2 (words. map toLower, map words)) phrases
 
 --------------------------------------
 
@@ -108,6 +108,13 @@ reduce = reductionsApply reductions
 reductionsApply :: [PhrasePair] -> Phrase -> Phrase
 {- TO BE WRITTEN -}
 reductionsApply _ = id
+reflect [] = []
+reflect (s:phrases)
+    | elem s (map fst reflections) = x:reflect phrases
+    | otherwise = s:reflect phrases
+    where
+      x :: String
+      x = (Maybe.fromMaybe "" (lookup s reflections))
 
 
 -------------------------------------------------------
@@ -132,28 +139,14 @@ match _ [] [] = Just []
 match _ [] _ = Nothing
 match _ _ [] = Nothing
 match wildcard (x:xs) (y:ys)
-    | x /= wildcard && x == y = match wildcard xs ys
-    | x == wildcard && xs == ys = singleWildcardMatch (x:xs) (y:ys)
-    | x == wildcard && List.isInfixOf xs ys = longerWildcardMatch (x:xs) (y:ys)
-    | x == wildcard && elem wildcard xs && (getIndex 0 [x] xs) < length (y:ys) = longerWildcardMatch (x:xs) (y:ys)
+    | x == wildcard = orElse (singleWildcardMatch (x:xs) (y:ys)) (longerWildcardMatch (x:xs) (y:ys))
+    | x == y = match wildcard xs ys
     | otherwise = Nothing
-
-getIndex index xs ys
-    | length xs == 0 = length ys
-    | xs == ((drop index . take (index + (length xs))) ys ) = index
-    | otherwise = getIndex (index + 1) xs ys
-
 
 -- Helper function to match
 singleWildcardMatch, longerWildcardMatch :: Eq a => [a] -> [a] -> Maybe [a]
 singleWildcardMatch (wc:xs) (y:ys) = match wc xs ys >> Just [y]
-
-longerWildcardMatch (x:xs) (y:ys)
-    | elem x xs = Just (y:(drop 0 . take (getIndex 0 ((drop 0 . take (getIndex 0 [x] xs)) xs) ys)) ys)
-    | ((y:(drop 0 . take (getIndex 0 xs ys)) ys) ++ xs) /=  y:ys = Nothing
-    | otherwise = Just (y:(drop 0 . take (getIndex 0 xs ys)) ys)
-
-
+longerWildcardMatch (wc:ps) (x:xs) = mmap (x:) $ match wc (wc:ps) xs
 
 -- Test cases --------------------
 
@@ -181,7 +174,7 @@ transformationApply wildcard func xs p
     where
       m = (func r)
         where
-          r = (Maybe.fromJust (match wildcard (fst p) xs))
+          r = (Maybe.fromMaybe [] (match wildcard (fst p) xs))
 
 
 -- Applying a list of patterns until one succeeds
