@@ -33,12 +33,10 @@ stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
 stateOfMind brain = do
    r <- randomIO :: IO Float
    let phrasepairs = map (\i->(fst i, pick r (snd i))) brain
-   -- return $ rulesApply (map (map2 (id, pick r)) brain)
    return $ rulesApply phrasepairs
 
 rulesApply :: [PhrasePair] -> Phrase -> Phrase
-rulesApply phrasepairs phrase  =  Maybe.fromMaybe [] (transformationsApply "*" reflect phrasepairs phrase)
--- rulesApply = (maybe [] id . ) . transformationsApply "*" reflect
+rulesApply  =  (Maybe.fromMaybe [] . ) . transformationsApply "*" reflect
 
 reflect :: Phrase -> Phrase
 reflect [] = []
@@ -78,11 +76,11 @@ present :: Phrase -> String
 present = unwords
 
 prepare :: String -> Phrase
-prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|") 
--- prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|")
+prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|")
+-- prepare = rwords . map toLower . filter (not . flip elem ".,:;*!#%&|")
 
 rulesCompile :: [(String, [String])] -> BotBrain
-rulesCompile phrases = map ( map2 (words. map toLower, map words)) phrases
+rulesCompile = map ( map2 (words. map toLower, map words))
 
 --------------------------------------
 
@@ -106,16 +104,10 @@ reduce :: Phrase -> Phrase
 reduce = reductionsApply reductions
 
 reductionsApply :: [PhrasePair] -> Phrase -> Phrase
-{- TO BE WRITTEN -}
-reductionsApply _ = id
-reflect [] = []
-reflect (s:phrases)
-    | elem s (map fst reflections) = x:reflect phrases
-    | otherwise = s:reflect phrases
-    where
-      x :: String
-      x = (Maybe.fromMaybe "" (lookup s reflections))
-
+reductionsApply [] phrase = phrase
+reductionsApply (r:rs) phrase
+    | match '*' (unwords (fst r)) (unwords phrase) == Nothing =  reductionsApply rs phrase
+    | otherwise = reductionsApply reductions (substitute "*" (snd r) (Maybe.fromMaybe [] (match "*" (fst r) phrase)))
 
 -------------------------------------------------------
 -- Match and substitute
@@ -159,8 +151,6 @@ substituteCheck = substituteTest == testString
 
 matchTest = match '*' testPattern testString
 matchCheck = matchTest == Just testSubstitutions
-
-
 
 -------------------------------------------------------
 -- Applying patterns
