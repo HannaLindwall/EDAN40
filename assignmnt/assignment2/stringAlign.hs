@@ -3,23 +3,49 @@ import qualified Data.List as List
 
 type AlignmentType = (String,String)
 
-optAlignments :: String -> String -> [AlignmentType]
-optAlignments a [] = [(a,[])]
-optAlignments [] a = [([],a)]
-optAlignments (s1:string1) (s2:string2) = maximaBy similarityScore [((s1:string1),(s2:string2)), (s1:('-':string1), (s2:string2)), ((s1:string1), s2:('-':string2))]
+outputOptAlignments string1 string2 = putStrLn ("There are " ++ show (length xs) ++ " optimal alignments:\n\n" ++ (buildString xs) ++ "There are " ++ show (length xs) ++ " optimal alignments!")
+    where xs = optAlignments string1 string2
 
-similarityScore :: (String, String) -> Int
-similarityScore ([], []) = 0
-similarityScore (_, []) = 0
-similarityScore ([], _) = 0
-similarityScore ((s1:string1), (s2:string2))
-    | s1 == '-' || s2 == '-' = scoreSpace + (similarityScore (string1, string2))
-    | s1 /= s2 = scoreMisMatch + (similarityScore (string1, string2))
-    | otherwise = scoreMatch + (similarityScore (string1, string2))
+buildString [] = []
+buildString (x:xs) = ((fst x) ++ "\n" ++ (snd x) ++ "\n\n") ++ (buildString xs)
+
+optAlignments :: String -> String -> [AlignmentType]
+optAlignments [] [] = [([], [])]
+optAlignments (x:xs) [] = attachHeads x '-' (optAlignments xs [])
+optAlignments [] (y:ys) = attachHeads '-' y (optAlignments [] ys)
+optAlignments (s1:string1) (s2:string2) = maximaBy currScore (concat [attachHeads s1 s2 (optAlignments string1 string2)
+    , attachHeads '-' s2 (optAlignments (s1:string1) string2)
+    , attachHeads s1 '-' (optAlignments string1 (s2:string2)) ])
+
+-- func är funktionen som sorterar på högsta scoren, tar in ett par
+currScore :: (String, String) -> Int
+currScore pair = simScore (fst pair) (snd pair)
+
+simScore :: String -> String -> Int
+simScore [] [] = 0
+simScore _ [] = (-1)
+simScore [] _ = (-1)
+simScore (s1:string1) (s2:string2)
+    | s1 == '-' || s2 == '-' = scoreSpace + (simScore string1 string2)
+    | s1 /= s2 = scoreMisMatch + (simScore string1 string2)
+    | otherwise = scoreMatch + (simScore string1 string2)
     where
       scoreMatch = 0
       scoreMisMatch = (-1)
       scoreSpace = (-1)
+
+similarityScore :: String -> String -> Int
+similarityScore [] [] = 0
+similarityScore _ [] = (-1)
+similarityScore [] _ = (-1)
+similarityScore (s1:string1) (s2:string2) =
+   max (similarityScore string1 string2 + score (s1,s2))
+   (max (similarityScore string1 (s2:string2) + score (s1,'-')) (similarityScore (s1:string1) string2 + score ('-',s2)))
+
+score (x, '-') = (-1)
+score ('-', y) = (-1)
+score (x,y) = if x == y then 0 else (-1)
+
 -- h1 and h2 gets attached as heads to the lists inside the every tuple in aList
 attachHeads :: a -> a -> [([a],[a])] -> [([a],[a])]
 attachHeads h1 h2 aList = [(h1:xs,h2:ys) | (xs,ys) <- aList]
