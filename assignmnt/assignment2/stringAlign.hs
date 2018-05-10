@@ -9,6 +9,7 @@ outputOptAlignments string1 string2 = putStrLn ("There are " ++ show (length xs)
 buildString [] = []
 buildString (x:xs) = ((fst x) ++ "\n" ++ (snd x) ++ "\n\n") ++ (buildString xs)
 
+{- |
 optAlignments :: String -> String -> [AlignmentType]
 optAlignments [] [] = [([], [])]
 optAlignments (x:xs) [] = attachHeads x '-' (optAlignments xs [])
@@ -16,6 +17,38 @@ optAlignments [] (y:ys) = attachHeads '-' y (optAlignments [] ys)
 optAlignments (s1:string1) (s2:string2) = maximaBy currScore (concat [attachHeads s1 s2 (optAlignments string1 string2)
     , attachHeads '-' s2 (optAlignments (s1:string1) string2)
     , attachHeads s1 '-' (optAlignments string1 (s2:string2)) ])
+¦ -}
+
+optAlignments :: String -> String -> [AlignmentType]
+optAlignments [] [] = [([], [])]
+optAlignments (x:xs) [] = attachHeads x '-' (optAlignments xs [])
+optAlignments [] (y:ys) = attachHeads '-' y (optAlignments [] ys)
+optAlignments (s1:string1) (s2:string2) = maximaBy currScore (concat [attachHeads s1 s2 (optAlignments string1 string2)
+    , attachHeads '-' s2 (optAlignments (s1:string1) string2)
+    , attachHeads s1 '-' (optAlignments string1 (s2:string2)) ])
+
+
+
+
+alignLength :: Eq a => [a] -> [a] -> [AlignmentType]
+alignLength xs ys = alignLen (length xs) (length ys)
+  where
+    alignLen i j = alignTable!!i!!j
+    alignTable = [[ alignEntry i j | j<-[0..]] | i<-[0..] ]
+
+    alignEntry :: Int -> Int -> AlignmentType
+    alignEntry _ 0 = 0
+    alignEntry 0 _ = 0
+    alignEntry i j
+
+
+      maximaBy currScore ()
+      | x == y    = 1 + alignLen (i-1) (j-1)
+      | otherwise = max (alignLen i (j-1))
+                        (alignLen (i-1) j)
+      where
+         x = xs!!(i-1)
+         y = ys!!(j-1)
 
 -- func är funktionen som sorterar på högsta scoren, tar in ett par
 currScore :: (String, String) -> Int
@@ -33,7 +66,7 @@ simScore (s1:string1) (s2:string2)
       scoreMatch = 0
       scoreMisMatch = (-1)
       scoreSpace = (-1)
-
+{- |
 similarityScore :: String -> String -> Int
 similarityScore [] [] = 0
 similarityScore _ [] = (-1)
@@ -45,6 +78,33 @@ similarityScore (s1:string1) (s2:string2) =
 score (x, '-') = (-1)
 score ('-', y) = (-1)
 score (x,y) = if x == y then 0 else (-1)
+|-}
+
+similarityScore :: String -> String -> Int
+similarityScore [] [] = 0
+similarityScore _ [] = (-1)
+similarityScore [] _ = (-1)
+similarityScore xs ys = simLen   (length xs) (length ys)
+     where
+       simLen i j = simTable!!i!!j
+       simTable = [[ simEntry i j | j<-[0..]] | i<-[0..] ]
+
+       simEntry :: Int -> Int -> Int
+       simEntry _ 0 = (-1)
+       simEntry 0 _ = (-1)
+       simEntry i j =
+          max (simLen (i-1) (j-1) + score (x,y))
+         (max (simLen i (j-1) + score(x,'-')) (simLen (i-1) j + score('-',y)))
+         where
+            x = xs!!(i-1)
+            y = ys!!(j-1)
+
+
+score (x, '-') = (-1)
+score ('-', y) = (-1)
+score (x,y) = if x == y then 0 else (-1)
+
+
 
 -- h1 and h2 gets attached as heads to the lists inside the every tuple in aList
 attachHeads :: a -> a -> [([a],[a])] -> [([a],[a])]
