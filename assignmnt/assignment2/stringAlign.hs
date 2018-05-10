@@ -34,17 +34,35 @@ simScore (s1:string1) (s2:string2)
       scoreMisMatch = (-1)
       scoreSpace = (-1)
 
-similarityScore :: String -> String -> Int
-similarityScore [] [] = 0
-similarityScore _ [] = (-1)
-similarityScore [] _ = (-1)
-similarityScore (s1:string1) (s2:string2) =
-   max (similarityScore string1 string2 + score (s1,s2))
-   (max (similarityScore string1 (s2:string2) + score (s1,'-')) (similarityScore (s1:string1) string2 + score ('-',s2)))
+similarityScore' :: String -> String -> Int
+similarityScore' [] [] = 0
+similarityScore' _ [] = (-1)
+similarityScore' [] _ = (-1)
+similarityScore' (s1:string1) (s2:string2) =
+   max (similarityScore string1 string2 + score' (s1,s2))
+   (max (similarityScore string1 (s2:string2) + score' (s1,'-')) (similarityScore (s1:string1) string2 + score' ('-',s2)))
 
-score (x, '-') = (-1)
-score ('-', y) = (-1)
-score (x,y) = if x == y then 0 else (-1)
+score' (x, '-') = (-1)
+score' ('-', y) = (-1)
+score' (x,y) = if x == y then 0 else (-1)
+
+similarityScore :: Eq a => [a] -> [a] -> Int
+similarityScore xs ys = simLen (length xs) (length ys)
+  where
+    simLen i j = simTable!!i!!j
+    simTable = [[ simEntry i j | j<-[0..]] | i<-[0..] ]
+
+    simEntry :: Int -> Int -> Int
+    simEntry _ 0 = (-1)
+    simEntry 0 _ = (-1)
+    simEntry i j = max (simLen (i-1) (j-1) + score(x,y)) (max (simLen i (j-1) + score(x,y) (simLen (i-1) j + score(x,y)))
+      where
+         x = xs!!(i-1)
+         y = ys!!(j-1)
+
+ score (x, '-') = (-1)
+ score ('-', y) = (-1)
+ score (x,y) = if x == y then 0 else (-1)
 
 -- h1 and h2 gets attached as heads to the lists inside the every tuple in aList
 attachHeads :: a -> a -> [([a],[a])] -> [([a],[a])]
