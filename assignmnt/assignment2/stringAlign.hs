@@ -35,20 +35,20 @@ optAlignments xs ys = alignLen (length xs) (length ys)
 
     alignEntry :: Int -> Int -> (Int, [AlignmentType])
     alignEntry 0 0 = (0,[])
-    alignEntry i 0 = ((-1), [attachTails x '-' (alignLen (i-1) 0)])
+    alignEntry i 0 = ((-1), attachTails x '-' (snd (alignLen (i-1) 0)))
       where
         x = xs!!(i-1)
-    alignEntry 0 j = ((-1), [attachTails '-' y (alignLen 0 (j-1))])
+    alignEntry 0 j = ((-1), attachTails '-' y (snd (alignLen 0 (j-1))))
       where
          y = ys!!(j-1)
     alignEntry i j = maximaBy fst [(scr1 , [algns1]), ( scr2 , [algns2]), ( scr3, [algns3])]
       where
-        scr1 = fst alignLen (i-1) (j-1) + score (x,y)
-        scr2 = fst alignLen i (j-1) + score ('-',y)
-        scr3 = fst alignLen (i-1) j + score (x,'-')
-        algns1 = attachTails x y snd (alignLen (i-1) (j-1))
-        algns2 = attachTails '-' y snd (alignLen i (j-1))
-        algns3 = attachTails x '-' snd (alignLen (i-1) j)
+        scr1 = (fst (alignLen (i-1) (j-1))) + score (x,y)
+        scr2 = (fst (alignLen i (j-1))) + score ('-',y)
+        scr3 = (fst (alignLen (i-1) j)) + score (x,'-')
+        algns1 = attachTails x y (snd (alignLen (i-1) (j-1)))
+        algns2 = attachTails '-' y (snd (alignLen i (j-1)))
+        algns3 = attachTails x '-' (snd (alignLen (i-1) j))
         x = xs!!(i-1)
         y = ys!!(j-1)
 
