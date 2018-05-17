@@ -7,13 +7,14 @@ type AlignmentType = (String,String)
 scoreSpace = -1
 scoreMisMatch = -1
 scoreMatch = 0
-
+-- 2.e)
 outputOptAlignments string1 string2 = putStrLn ("There are " ++ show (length xs) ++ " optimal alignments:\n\n" ++ buildString xs ++ "There are " ++ show (length xs) ++ " optimal alignments!")
     where xs = optAlignments string1 string2
 
 buildString [] = []
 buildString xs = foldr (\ x -> (++) (fst x ++ "\n" ++ snd x ++ "\n\n")) [] xs
 
+-- 2.d)
 optAlignments' :: String -> String -> [AlignmentType]
 optAlignments' [] [] = [([],[])]
 optAlignments' (x:xs) [] = attachHeads x '-' (optAlignments' xs [])
@@ -22,6 +23,7 @@ optAlignments' (s1:string1) (s2:string2) = maximaBy currScore (concat [attachHea
     , attachHeads '-' s2 (optAlignments' (s1:string1) string2)
     , attachHeads s1 '-' (optAlignments' string1 (s2:string2)) ])
 
+-- 3
 optAlignments :: String -> String -> [AlignmentType]
 optAlignments xs ys = maximaBy currScore (snd (alignLen (length xs) (length ys)))
   where
@@ -44,7 +46,7 @@ optAlignments xs ys = maximaBy currScore (snd (alignLen (length xs) (length ys))
         x = xs!!(i-1)
         y = ys!!(j-1)
 
-
+--2.a)
 similarityScore' :: String -> String -> Int
 similarityScore' [] [] = scoreMatch
 similarityScore' _ [] = scoreSpace
@@ -74,6 +76,7 @@ score (x, '-') = scoreSpace
 score ('-', y) = scoreSpace
 score (x,y) = if x == y then scoreMatch else scoreMisMatch
 
+-- 2.b)
 -- h1 and h2 gets attached as heads to the lists inside the every tuple in aList
 attachHeads :: a -> a -> [([a],[a])] -> [([a],[a])]
 attachHeads h1 h2 aList = [(h1:xs,h2:ys) | (xs,ys) <- aList]
@@ -85,6 +88,7 @@ attachTails h1 h2 aList = [(xs ++ [h1], ys ++ [h2]) | (xs,ys) <- aList]
 currScore :: (String, String) -> Int
 currScore (a,b) = simScore a b
 
+-- 2.c)
 maximaBy :: Ord b => (a -> b) -> [a] -> [a]
 maximaBy valueFcn xs = getListElements valueFcn (reverse (sort valueFcn xs))
 
