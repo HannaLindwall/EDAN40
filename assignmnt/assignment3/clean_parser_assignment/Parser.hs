@@ -1,6 +1,4 @@
-module Parser(module CoreParser, T, digit, digitVal, chars, letter, err,
-              lit, number, iter, accept, require, token,
-              spaces, word, (-#), (#-)) where
+module Parser(module CoreParser, T, digit, digitVal, chars, letter, err, lit, number, iter, accept, require, token, readLine, spaces, word, (-#), (#-)) where
 import Prelude hiding (return, fail)
 import Data.Char
 import CoreParser

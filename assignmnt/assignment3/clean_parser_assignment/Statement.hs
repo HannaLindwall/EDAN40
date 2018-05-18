@@ -12,7 +12,7 @@ data Statement =
     Begin [Statement] |
     While  Expr.T Statement |
     Read String |
-    Write Expr.T
+    Write Expr.T |
     Comment String
     deriving Show
 
@@ -34,7 +34,7 @@ buildAss (v, e) = Assignment v e
 --  m - m/k*k, (skip, write m)
 -- accept "if" -# Expr.parse #- require "then" # parse #- require "else" # parse >-> buildIf
 ifParser = accept "if" -# Expr.parse #- require "then" # parse #- require "else" # parse >-> buildIf
-buildIf ((expr, stmnt1), stmnt2) = If expr stmt1 stmt2
+buildIf ((expr, stmnt1), stmnt2) = If expr stmnt1 stmnt2
 
 skipParser = accept "skip" #- require ";" >-> buildSkip
 buildSkip _ = Skip
@@ -85,9 +85,25 @@ exec (Read variable : stmts) dict input = exec stmts (Dictionary.insert (variabl
 -- add the result from Expr.value to the final result from the rest of the exec's -> [Integer]
 exec (Write expr : stmts) dict input = Expr.value expr dict : exec stmts dict input
 -- comment, just skip over lines; stmnts
-exec (Comment str : stmts) dict input = exec stmts dict input
+exec (Comment s : stmts) dict input = exec stmts dict input
 
+-- add indents
+indentSize = 2
+indents n = replicate (n * indentSize ) ' '
+
+-- indents n ++ "begin\n" ++ concatMap (shw (n + 1)) bStmts ++ indents n ++ "end\n"
+shw ::Int -> Statement -> String
+shw n (Assignment variable expr) = indents n ++ variable ++ ":=" ++ Expr.toString expr ++ ";\n"
+shw n (If expr thenStmts elseStmts) = indents n ++ "if " ++ Expr.toString expr ++ " then\n" ++ shw (n+1) thenStmts ++ indents n ++ "else\n" ++ shw (n+1) elseStmts
+shw n Skip = indents n ++ "skip" ++ ";\n"
+-- give concatMap (show (n+1)) to apply on all stmts in beginStmns
+shw n (Begin beginStmns) = indents n ++ "begin\n" ++ concatMap (shw (n+1)) beginStmns ++ indents n ++ "end\n"
+shw n (While expr stmnt) = indents n ++ "while " ++ Expr.toString expr ++ "do\n" ++ shw (n+1) stmnt
+shw n (Read variable) = indents n ++ "read " ++ variable ++ ";\n"
+shw n (Write expr) = indents n ++ "write " ++ Expr.toString expr ++ ";\n"
+shw n (Comment s) = indents n ++ "-- " ++ s ++ ";\n"
 
 instance Parse Statement where
   parse = parser
-  toString = error "Statement.toString not implemented"
+  -- start with 0 indent
+  toString = shw 0
