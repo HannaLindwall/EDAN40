@@ -13,31 +13,51 @@ data Statement =
     While  Expr.T Statement |
     Read String |
     Write Expr.T
+    Comment String
     deriving Show
 
-parser = assignmentParser ! ifParser ! skipParser ! beginParser ! whileParser ! readParser ! writeParser
+-- choose any of these parsers
+parser = assignmentParser ! ifParser ! skipParser ! beginParser ! whileParser ! readParser ! writeParser ! commentParser
 
 -- parser for assignment
+-- word -> (x, :=3) -> skickar :=3 till accept -> (:=, 3), -# vaskar resultatet från accept dvs. := och tar resultatet från första dvs. x
+-- då är bara den resterande strängen kvar -> 3 -> (x, 3)
+-- removes the ;
 assignmentParser = word #- accept ":=" # Expr.parse #- require ";" >-> buildAss
 buildAss (v, e) = Assignment v e
 
-ifParser
-buildIf
+-- if m - m/k*k then\ skip;\ else\ write m;\
+-- m - m/k*k , then\ skip;\ else\ write m;\
+-- m - m/k*k , skip;\ else\ write m;\
+-- m - m/k*k, (skip, else\ write m;\)
+-- m - m/k*k, (skip, write m;\)
+--  m - m/k*k, (skip, write m)
+-- accept "if" -# Expr.parse #- require "then" # parse #- require "else" # parse >-> buildIf
+ifParser = accept "if" -# Expr.parse #- require "then" # parse #- require "else" # parse >-> buildIf
+buildIf ((expr, stmnt1), stmnt2) = If expr stmt1 stmt2
 
-skipParser
-buildSkip
+skipParser = accept "skip" #- require ";" >-> buildSkip
+buildSkip _ = Skip
 
-beginParser
-buildBegin
+-- man vill köra parse för varje stmt till och med end
+beginParser = accept "begin" -# iter (parse #- spaces) #- require "end" >-> buildBegin
+buildBegin = Begin
 
-whileParser
-buildWhile
+-- 'while' expr 'do' statement
+whileParser = accept "while" -# Expr.parse #- require "do" # parse >-> buildWhile
+buildWhile (expr, stmt) = While expr stmt
 
-readParser
-buildRead
+-- \read n;\
+readParser = accept "read" -# word #- require ";" >-> buildRead
+buildRead = Read
 
-writeParser
-buildWrite
+-- write r;\
+writeParser = accept "write" -# Expr.parse #- require ";" >-> buildWrite
+buildWrite = Write
+
+-- commentParser should get -- and then strings until \n
+commentParser = accept "--" -# readLine #- require "\n" >-> buildComment
+buildComment = Comment
 
 exec :: [T] -> Dictionary.T String Integer -> [Integer] -> [Integer]
 exec [] _ _ = []
@@ -64,8 +84,10 @@ exec (While expr stmnt : stmts) dict input =
 exec (Read variable : stmts) dict input = exec stmts (Dictionary.insert (variable, head input) dict) input
 -- add the result from Expr.value to the final result from the rest of the exec's -> [Integer]
 exec (Write expr : stmts) dict input = Expr.value expr dict : exec stmts dict input
+-- comment, just skip over lines; stmnts
+exec (Comment str : stmts) dict input = exec stmts dict input
 
 
 instance Parse Statement where
-  parse = error "Statement.parse not implemented"
+  parse = parser
   toString = error "Statement.toString not implemented"

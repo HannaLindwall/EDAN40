@@ -37,6 +37,7 @@ token m = m #- spaces
 letter :: Parser Char
 letter = char ? isAlpha
 
+-- remove spaces and check if word
 word :: Parser String
 word = token (letter # iter letter >-> cons)
 
@@ -67,3 +68,7 @@ number' n = digitVal #> (\ d -> number' (10*n+d))
           ! return n
 number :: Parser Integer
 number = token (digitVal #> number')
+
+-- iterate over chars until \n is found
+readLine :: Parser String
+readLine = iter (char ? (/='\n'))
