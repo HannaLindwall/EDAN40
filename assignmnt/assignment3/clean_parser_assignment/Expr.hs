@@ -29,7 +29,7 @@ import qualified Dictionary
 import qualified Data.Maybe as Maybe
 
 data Expr = Num Integer | Var String | Add Expr Expr
-       | Sub Expr Expr | Mul Expr Expr | Div Expr Expr | Exp Expr Expr
+       | Sub Expr Expr | Mul Expr Expr | Div Expr Expr | Pow Expr Expr
          deriving Show
 
 type T = Expr
@@ -48,7 +48,7 @@ mulOp = lit '*' >-> (\_ -> Mul) !
 addOp = lit '+' >-> (\_ -> Add) !
         lit '-' >-> (\_ -> Sub)
 
-expOp = lit '^' >-> (\_ -> Exp)
+expOp = lit '^' >-> (\_ -> Pow)
 
 bldOp e (oper,e') = oper e e'
 
@@ -68,8 +68,6 @@ expr = term #> expr'
 
 parens cond str = if cond then "(" ++ str ++ ")" else str
 
-pow' e = expOp # factor >-> bldOp e #> pow' ! return e
-pow = factor #> pow'
 
 shw :: Int -> Expr -> String
 shw prec (Num n) = show n
@@ -91,7 +89,7 @@ value (Mul t u) dict = value t dict * value u dict
 value (Div t u) dict
     | value u dict == 0 = error "Division by zero"
     | otherwise = (value t dict) `div` (value u dict)
-value (Exp t u) dict = value t dict ^ value u dict
+value (Pow t u) dict = value t dict ^ value u dict
 
 instance Parse Expr where
     parse = expr
