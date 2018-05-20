@@ -1,4 +1,4 @@
-{- Test for Expr-}
+  {- Test for Expr-}
 module TestExpr where
 
 import qualified Dictionary
@@ -6,7 +6,7 @@ import Expr
 
 dict = Dictionary.insert ("x", 1) $
        Dictionary.insert ("y", 2) $
-       Dictionary.empty 
+       Dictionary.empty
 
 testValue string = value (fromString string) dict
 
@@ -16,5 +16,5 @@ n3 = testValue "x+y"
 n4 = testValue "x-y-y"
 n21 = testValue "1/(2-y)" {-  Expr.value: division by 0 -}
 n31 = testValue "2+z"     {-  Expr.value: undefined variable z -}
-
-
+n5 = testValue "2^3"
+n6 = testValue "x^y+3^(1+2)"

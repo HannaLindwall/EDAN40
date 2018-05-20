@@ -19,6 +19,25 @@ data Statement =
 -- choose any of these parsers
 parser = assignmentParser ! ifParser ! skipParser ! beginParser ! whileParser ! readParser ! writeParser ! commentParser
 
+{-
+  infixl 3 !
+  infixl 7 ?
+  infixl 6 #
+  infixl 5 >->
+  infixl 4 #>
+  infixl 7 -#, #-
+-}
+
+{-
+-- do something and then return snd parser
+(-#) :: Parser a -> Parser b -> Parser b
+m -# n = m # n >-> snd
+
+-- do something and then return fst parser
+(#-) :: Parser a -> Parser b -> Parser a
+m #- n = m # n >-> fst
+-}
+
 -- parser for assignment
 -- word -> (x, :=3) -> skickar :=3 till accept -> (:=, 3), -# vaskar resultatet från accept dvs. := och tar resultatet från första dvs. x
 -- då är bara den resterande strängen kvar -> 3 -> (x, 3)
