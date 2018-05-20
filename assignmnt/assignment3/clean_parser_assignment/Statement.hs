@@ -100,7 +100,7 @@ exec (While expr stmnt : stmts) dict input =
     then exec (stmnt: While expr stmnt : stmts) dict input
     else exec stmts dict input
 -- read a variable and add it to dictionary with the first integer from input
-exec (Read variable : stmts) dict input = exec stmts (Dictionary.insert (variable, head input) dict) input
+exec (Read variable : stmts) dict (intgr : input) = exec stmts (Dictionary.insert (variable, intgr) dict) input
 -- add the result from Expr.value to the final result from the rest of the exec's -> [Integer]
 exec (Write expr : stmts) dict input = Expr.value expr dict : exec stmts dict input
 -- comment, just skip over lines; stmnts
